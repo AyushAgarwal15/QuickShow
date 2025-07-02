@@ -3,8 +3,6 @@
 
 ---
 
-![QuickShow banner](docs/quickshow_banner.png)
-
 > Book cinema tickets in seconds, manage shows in real-time, and get delightful insights – all from one lightning-fast web app.
 
 ---
