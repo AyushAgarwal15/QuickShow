@@ -5,6 +5,7 @@ import { CheckIcon, DeleteIcon, StarIcon } from "lucide-react";
 import { kConverter } from "../../lib/kConverter";
 import { useAppContext } from "../../context/AppContext";
 import toast from "react-hot-toast";
+import SearchBar from "../../components/SearchBar";
 
 const AddShows = () => {
   const { axios, getToken, user, image_base_url } = useAppContext();
@@ -17,6 +18,7 @@ const AddShows = () => {
   const [dateTimeInput, setDateTimeInput] = useState("");
   const [showPrice, setShowPrice] = useState("");
   const [addingShow, setAddingShow] = useState(false);
+  const [searchText, setSearchText] = useState("");
 
   const fetchNowPlayingMovies = async () => {
     try {
@@ -135,9 +137,12 @@ const AddShows = () => {
     <>
       <Title text1="Add" text2="Shows" />
       <p className="mt-10 text-lg font-medium">Now Playing Movies</p>
+      <div className="mt-6 mb-2 w-72">
+        <SearchBar value={searchText} onChange={setSearchText} />
+      </div>
       <div className="overflow-x-auto pb-4">
         <div className="group flex flex-wrap gap-4 mt-4 w-max">
-          {nowPlayingMovies.map((movie) => (
+          {(searchText ? nowPlayingMovies.filter((movie) => movie.title.toLowerCase().includes(searchText.toLowerCase())) : nowPlayingMovies).map((movie) => (
             <div
               key={movie.id}
               className={`relative max-w-40 cursor-pointer group-hover:not-hover:opacity-40 hover:-translate-y-1 transition duration-300 `}

@@ -22,7 +22,8 @@ const Favorite = () => {
     </div>
   ) : (
     <div className='flex flex-col items-center justify-center h-screen'>
-      <h1 className='text-3xl font-bold text-center'>No movies available</h1>
+      <h1 className='text-3xl font-bold text-center'>No favourites added yet</h1>
+      <p className='text-gray-400 mt-2'>Browse movies and tap the heart icon to add.</p>
     </div>
   )
 }

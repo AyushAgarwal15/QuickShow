@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { dummyShowsData } from "../../assets/assets";
 import Loading from "../../components/Loading";
 import Title from "../../components/admin/Title";
 import { dateFormat } from "../../lib/dateFormat";
 import { useAppContext } from "../../context/AppContext";
 import { Trash2Icon } from "lucide-react";
 import { toast } from "react-hot-toast";
+import SearchBar from "../../components/SearchBar";
 
 const ListShows = () => {
   const currency = import.meta.env.VITE_CURRENCY;
@@ -13,6 +13,8 @@ const ListShows = () => {
   const { axios, getToken, user } = useAppContext();
 
   const [shows, setShows] = useState([]);
+  const [searchText, setSearchText] = useState("");
+
   const [loading, setLoading] = useState(true);
 
   const getAllShows = async () => {
@@ -39,6 +41,7 @@ const ListShows = () => {
         toast.error(data.message);
       }
     } catch (err) {
+      console.error(err);
       toast.error("Error deleting");
     }
   };
@@ -53,6 +56,11 @@ const ListShows = () => {
     <>
       <Title text1="List" text2="Shows" />
       <div className="max-w-4xl mt-6 overflow-x-auto">
+        {/* Search */}
+        <div className="mb-3 w-72">
+          <SearchBar value={searchText} onChange={setSearchText} />
+        </div>
+
         <table className="w-full border-collapse rounded-md overflow-hidden text-nowrap">
           <thead>
             <tr className="bg-primary/20 text-left text-white">
@@ -64,7 +72,15 @@ const ListShows = () => {
             </tr>
           </thead>
           <tbody className="text-sm font-light">
-            {shows.map((show, index) => (
+            {(searchText ? shows.filter((s)=> {
+              const q = searchText.toLowerCase();
+              return (
+                s.movie.title.toLowerCase().includes(q) ||
+                dateFormat(s.showDateTime).toLowerCase().includes(q) ||
+                String(Object.keys(s.occupiedSeats).length).includes(q) ||
+                String(Object.keys(s.occupiedSeats).length * s.showPrice).includes(q)
+              );
+            }) : shows).map((show, index) => (
               <tr
                 key={index}
                 className="border-b border-primary/10 bg-primary/5 even:bg-primary/10"
