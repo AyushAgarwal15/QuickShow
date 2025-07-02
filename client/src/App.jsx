@@ -17,6 +17,7 @@ import ListBookings from "./pages/admin/ListBookings";
 import { useAppContext } from "./context/AppContext";
 import Loading from "./components/Loading";
 import Login from "./pages/Login";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const App = () => {
   const isAdminRoute = useLocation().pathname.startsWith("/admin");
@@ -32,11 +33,25 @@ const App = () => {
         <Route path="/movies" element={<Movies />} />
         <Route path="/movies/:id" element={<MovieDetails />} />
         <Route path="/movies/:id/:date" element={<SeatLayout />} />
-        <Route path="/my-bookings" element={<MyBookings />} />
+        <Route
+          path="/my-bookings"
+          element={
+            <ProtectedRoute>
+              <MyBookings />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/loading/:nextUrl" element={<Loading />} />
         <Route path="/login" element={<Login />} />
 
-        <Route path="/favorite" element={<Favorite />} />
+        <Route
+          path="/favorite"
+          element={
+            <ProtectedRoute>
+              <Favorite />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/admin/*" element={user ? <Layout /> : <Loading />}>
           <Route index element={<Dashboard />} />
           <Route path="add-shows" element={<AddShows />} />

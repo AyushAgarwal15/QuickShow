@@ -4,6 +4,7 @@ import { assets } from "../assets/assets";
 import { MenuIcon, SearchIcon, XIcon } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
 import SearchBar from "./SearchBar";
+import BlurCircle from "./BlurCircle";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -65,24 +66,28 @@ const Navbar = () => {
         >
           Movies
         </Link>
-        <Link
-          onClick={() => {
-            scrollTo(0, 0);
-            setIsOpen(false);
-          }}
-          to="/my-bookings"
-        >
-          My Bookings
-        </Link>
-        <Link
-          onClick={() => {
-            scrollTo(0, 0);
-            setIsOpen(false);
-          }}
-          to="/favorite"
-        >
-          Favorites
-        </Link>
+        {user && (
+          <>
+            <Link
+              onClick={() => {
+                scrollTo(0, 0);
+                setIsOpen(false);
+              }}
+              to="/my-bookings"
+            >
+              My Bookings
+            </Link>
+            <Link
+              onClick={() => {
+                scrollTo(0, 0);
+                setIsOpen(false);
+              }}
+              to="/favorite"
+            >
+              Favorites
+            </Link>
+          </>
+        )}
       </div>
 
       <div className="flex items-center gap-8">
@@ -113,8 +118,8 @@ const Navbar = () => {
             Login
           </button>
         ) : (
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => setShowProfile(true)}>
+          <div className="flex items-center gap-3 relative">
+            <div className="flex items-center gap-2 cursor-pointer" onClick={() => setShowProfile(!showProfile)}>
               <img
                 src={user.image || assets.profile}
                 alt="avatar"
@@ -130,6 +135,18 @@ const Navbar = () => {
             <button onClick={logout} className="text-sm text-red-400 ml-2">
               Logout
             </button>
+            {/* Dropdown */}
+            {showProfile && (
+              <div className="absolute right-0 mt-10 bg-gray-900 border border-gray-700 rounded-lg p-4 w-60 z-50 backdrop-blur">
+                <div className="flex flex-col items-center gap-2 relative">
+                  <BlurCircle top="-30px" left="-30px" />
+                  <img src={user.image || assets.profile} alt="avatar" className="w-16 h-16 rounded-full object-cover" />
+                  <h2 className="text-base font-semibold">{user.name}</h2>
+                  <p className="text-gray-400 text-sm">{user.email}</p>
+                  <button className="mt-2 bg-primary px-3 py-1 rounded text-sm" onClick={()=>setShowProfile(false)}>Close</button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -138,20 +155,6 @@ const Navbar = () => {
         className="max-md:ml-4 md:hidden w-8 h-8 cursor-pointer"
         onClick={() => setIsOpen(!isOpen)}
       />
-
-      {/* Profile Modal */}
-      {showProfile && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={()=>setShowProfile(false)}>
-          <div className="bg-gray-900 border border-gray-700 rounded-lg p-6 w-80" onClick={(e)=>e.stopPropagation()}>
-            <div className="flex flex-col items-center gap-3">
-              <img src={user.image || assets.profile} alt="avatar" className="w-20 h-20 rounded-full object-cover" />
-              <h2 className="text-lg font-semibold">{user.name}</h2>
-              <p className="text-gray-400">{user.email}</p>
-              <button className="mt-4 bg-primary px-4 py-1 rounded" onClick={()=>setShowProfile(false)}>Close</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
