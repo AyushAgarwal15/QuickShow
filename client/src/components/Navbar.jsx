@@ -39,12 +39,12 @@ const Navbar = () => {
       </Link>
 
       <div
-        className={`max-md:absolute max-md:top-0 max-md:left-0 max-md:font-medium max-md:text-lg z-50 flex flex-col md:flex-row items-center max-md:justify-center gap-8 min-md:px-8 py-3 max-md:h-screen min-md:rounded-full backdrop-blur bg-black/70 md:bg-white/10 md:border border-gray-300/20 overflow-hidden transition-[width] duration-300 ${
-          isOpen ? "max-md:w-full" : "max-md:w-0"
+        className={`max-lg:absolute max-lg:top-0 max-lg:left-0 max-lg:font-medium max-lg:text-lg z-50 flex flex-col lg:flex-row items-center max-lg:justify-center gap-8 lg:px-8 py-3 max-lg:h-screen lg:rounded-full backdrop-blur bg-black/70 lg:bg-white/10 lg:border border-gray-300/20 overflow-hidden transition-[width] duration-300 ${
+          isOpen ? "max-lg:w-full" : "max-lg:w-0"
         }`}
       >
         <XIcon
-          className="md:hidden absolute top-6 right-6 w-6 h-6 cursor-pointer"
+          className="lg:hidden absolute top-6 right-6 w-6 h-6 cursor-pointer"
           onClick={() => setIsOpen(!isOpen)}
         />
 
@@ -86,6 +86,17 @@ const Navbar = () => {
             >
               Favorites
             </Link>
+            {isAdmin && (
+              <Link
+                onClick={() => {
+                  scrollTo(0, 0);
+                  setIsOpen(false);
+                }}
+                to="/admin"
+              >
+                Admin
+              </Link>
+            )}
           </>
         )}
       </div>
@@ -93,7 +104,7 @@ const Navbar = () => {
       <div className="flex items-center gap-8">
         {!isSearchOpen ? (
           <SearchIcon
-            className="max-md:hidden w-6 h-6 cursor-pointer"
+            className="hidden lg:block w-6 h-6 cursor-pointer"
             onClick={() => {
               setIsSearchOpen(true);
               scrollTo(0, 0);
@@ -127,23 +138,17 @@ const Navbar = () => {
               />
               <span className="text-sm font-medium">{user.name.split(" ")[0]}</span>
             </div>
-            {isAdmin && (
-              <button onClick={() => navigate("/admin") } className="text-sm">
-                Admin
-              </button>
-            )}
-            <button onClick={logout} className="text-sm text-red-400 ml-2">
-              Logout
-            </button>
+            {/* Admin shortcut next to avatar removed; now part of nav list */}
             {/* Dropdown */}
             {showProfile && (
-              <div className="absolute right-0 mt-14 bg-gray-900 border border-gray-700 rounded-lg p-4 w-60 z-50 backdrop-blur">
-                <div className="flex flex-col items-center gap-2 relative">
+              <div className="absolute right-0 top-full mt-2 bg-gray-900 border border-gray-700 rounded-lg p-4 w-60 z-50 backdrop-blur">
+                <XIcon className="absolute top-3 right-3 w-4 h-4 cursor-pointer text-gray-400 hover:text-white" onClick={() => setShowProfile(false)} />
+                <div className="flex flex-col items-center gap-2 relative mt-4">
                   <BlurCircle top="-30px" left="-30px" />
                   <img src={user.image || assets.profile} alt="avatar" className="w-16 h-16 rounded-full object-cover" />
                   <h2 className="text-base font-semibold">{user.name}</h2>
                   <p className="text-gray-400 text-sm">{user.email}</p>
-                  <button className="mt-2 bg-primary px-3 py-1 rounded text-sm" onClick={()=>setShowProfile(false)}>Close</button>
+                  <button className="mt-4 bg-primary px-3 py-1 rounded text-sm" onClick={logout}>Logout</button>
                 </div>
               </div>
             )}
@@ -152,7 +157,7 @@ const Navbar = () => {
       </div>
 
       <MenuIcon
-        className="max-md:ml-4 md:hidden w-8 h-8 cursor-pointer"
+        className="ml-4 lg:hidden w-8 h-8 cursor-pointer"
         onClick={() => setIsOpen(!isOpen)}
       />
     </div>

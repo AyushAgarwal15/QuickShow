@@ -16,8 +16,8 @@ const Favorite = () => {
 
       <h1 className='text-lg font-medium my-4'>Your Favorite Movies</h1>
       <div className='flex flex-wrap max-sm:justify-center gap-8'>
-        {favoriteMovies.map((movie)=> (
-          <MovieCard movie={movie} key={movie._id}/>
+        {favoriteMovies.map((movie, index)=> (
+          <MovieCard movie={movie} key={movie._id} index={index} showHeart={true}/>
         ))}
       </div>
     </div>
