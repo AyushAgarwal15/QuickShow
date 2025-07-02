@@ -61,3 +61,30 @@ export const getAllBookings = async (req, res) => {
     res.json({ success: false, message: error.message });
   }
 };
+
+// API to get all users (admin only)
+export const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find({}, "_id name email role image").sort({ createdAt: -1 });
+    res.json({ success: true, users });
+  } catch (error) {
+    console.error(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+// API to update user role (admin only)
+export const updateUserRole = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { role } = req.body; // 'user' or 'admin'
+    if (!['user','admin'].includes(role)) {
+      return res.json({ success:false, message:"Invalid role"});
+    }
+    await User.findByIdAndUpdate(userId, { role });
+    res.json({ success: true, message: "Role updated" });
+  } catch (error) {
+    console.error(error);
+    res.json({ success: false, message: error.message });
+  }
+};

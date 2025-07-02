@@ -14,15 +14,14 @@ import Dashboard from "./pages/admin/Dashboard";
 import AddShows from "./pages/admin/AddShows";
 import ListShows from "./pages/admin/ListShows";
 import ListBookings from "./pages/admin/ListBookings";
-import { useAppContext } from "./context/AppContext";
 import Loading from "./components/Loading";
 import Login from "./pages/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
+import ManageUsers from "./pages/admin/ManageUsers";
 
 const App = () => {
   const isAdminRoute = useLocation().pathname.startsWith("/admin");
-
-  const { user } = useAppContext();
 
   return (
     <>
@@ -52,11 +51,19 @@ const App = () => {
             </ProtectedRoute>
           }
         />
-        <Route path="/admin/*" element={user ? <Layout /> : <Loading />}>
+        <Route
+          path="/admin/*"
+          element={
+            <AdminRoute>
+              <Layout />
+            </AdminRoute>
+          }
+        >
           <Route index element={<Dashboard />} />
           <Route path="add-shows" element={<AddShows />} />
           <Route path="list-shows" element={<ListShows />} />
           <Route path="list-bookings" element={<ListBookings />} />
+          <Route path="manage-users" element={<ManageUsers />} />
         </Route>
       </Routes>
       {!isAdminRoute && <Footer />}

@@ -1,6 +1,7 @@
 import React from 'react'
 import MovieCard from '../components/MovieCard'
 import BlurCircle from '../components/BlurCircle'
+import EmptyState from '../components/EmptyState'
 import { useAppContext } from '../context/AppContext'
 import { useSearchParams } from "react-router-dom";
 
@@ -28,10 +29,7 @@ const Movies = () => {
       </div>
     </div>
   ) : (
-    <div className='flex flex-col items-center justify-center h-screen'>
-      <h1 className='text-3xl font-bold text-center'>No movies available</h1>
-      <p className='text-gray-400 mt-2'>Please check back later.</p>
-    </div>
+    <EmptyState title="No movies available" subtitle="Please check back later." />
   )
 }
 

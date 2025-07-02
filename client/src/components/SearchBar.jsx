@@ -1,9 +1,13 @@
 import React from "react";
 import { SearchIcon, XIcon } from "lucide-react";
+import { motion as Motion } from "framer-motion";
 
 const SearchBar = ({ value, onChange, onClose, placeholder = "Search...", className = "" }) => {
   return (
-    <div
+    <Motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.2 }}
       className={`relative flex items-center bg-white/10 border border-gray-300/20 px-3 py-1 rounded-full overflow-hidden ${className}`}
     >
       <SearchIcon className="w-4 h-4 text-gray-400" />
@@ -20,7 +24,7 @@ const SearchBar = ({ value, onChange, onClose, placeholder = "Search...", classN
           onClick={onClose}
         />
       )}
-    </div>
+    </Motion.div>
   );
 };
 

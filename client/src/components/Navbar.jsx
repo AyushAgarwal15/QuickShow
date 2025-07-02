@@ -137,7 +137,7 @@ const Navbar = () => {
             </button>
             {/* Dropdown */}
             {showProfile && (
-              <div className="absolute right-0 mt-10 bg-gray-900 border border-gray-700 rounded-lg p-4 w-60 z-50 backdrop-blur">
+              <div className="absolute right-0 mt-14 bg-gray-900 border border-gray-700 rounded-lg p-4 w-60 z-50 backdrop-blur">
                 <div className="flex flex-col items-center gap-2 relative">
                   <BlurCircle top="-30px" left="-30px" />
                   <img src={user.image || assets.profile} alt="avatar" className="w-16 h-16 rounded-full object-cover" />

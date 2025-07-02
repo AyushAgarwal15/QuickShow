@@ -2,6 +2,7 @@ import React from 'react'
 import MovieCard from '../components/MovieCard'
 import BlurCircle from '../components/BlurCircle'
 import { useAppContext } from '../context/AppContext'
+import EmptyState from '../components/EmptyState'
 
 const Favorite = () => {
 
@@ -21,10 +22,7 @@ const Favorite = () => {
       </div>
     </div>
   ) : (
-    <div className='flex flex-col items-center justify-center h-screen'>
-      <h1 className='text-3xl font-bold text-center'>No favourites added yet</h1>
-      <p className='text-gray-400 mt-2'>Browse movies and tap the heart icon to add.</p>
-    </div>
+    <EmptyState title="No favourites yet" subtitle="Browse movies and tap the heart icon to add." />
   )
 }
 
