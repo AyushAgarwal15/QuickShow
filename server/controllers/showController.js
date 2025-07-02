@@ -2,9 +2,20 @@ import axios from "axios";
 import Movie from "../models/Movie.js";
 import Show from "../models/Show.js";
 import https from "https";
+import NowPlaying from "../models/NowPlaying.js";
+
+// Caching setup for TMDB now playing movies
+let cachedMovies = [];
+let cacheTimestamp = 0; // epoch ms
+const CACHE_TTL = 60 * 60 * 1000; // 1 hour
 
 // API to get now playing movies from TMDB API
 export const getNowPlayingMovies = async (req, res) => {
+  // Serve cached data if it is still fresh
+  if (cachedMovies.length && Date.now() - cacheTimestamp < CACHE_TTL) {
+    return res.json({ success: true, movies: cachedMovies, source: "cache" });
+  }
+
   try {
     const tmdbKey = process.env.TMDB_API_KEY;
 
@@ -16,28 +27,39 @@ export const getNowPlayingMovies = async (req, res) => {
     }
 
     const url = "https://api.themoviedb.org/3/movie/now_playing";
-    let response;
+    const axiosOptions = {
+      timeout: 6000, // 6-second hard limit so the request never hangs
+      httpsAgent: new https.Agent({ family: 4 }), // force IPv4 first to avoid some ISP IPv6 DNS issues
+    };
 
-    // Heuristic: v4 Bearer token strings are long (> 40) and start with 'ey' (jwt)
+    let response;
     if (tmdbKey.startsWith("ey") || tmdbKey.length > 40) {
       response = await axios.get(url, {
+        ...axiosOptions,
         headers: {
           Authorization: `Bearer ${tmdbKey}`,
           "Content-Type": "application/json;charset=utf-8",
           Accept: "application/json",
         },
-        httpsAgent: new https.Agent({ family: 4 }),
       });
     } else {
-      // Assume v3 key – send via query parameter
       response = await axios.get(url, {
+        ...axiosOptions,
         params: { api_key: tmdbKey },
-        httpsAgent: new https.Agent({ family: 4 }),
       });
     }
 
-    const movies = response.data.results;
-    res.json({ success: true, movies });
+    cachedMovies = response.data.results;
+    cacheTimestamp = Date.now();
+
+    // Persist to MongoDB for future offline use
+    await NowPlaying.findOneAndUpdate(
+      { _id: "singleton" },
+      { movies: cachedMovies },
+      { upsert: true, new: true }
+    );
+
+    return res.json({ success: true, movies: cachedMovies, source: "tmdb" });
   } catch (error) {
     console.error("TMDB error:", {
       message: error.message,
@@ -45,8 +67,35 @@ export const getNowPlayingMovies = async (req, res) => {
       data: error?.response?.data,
     });
 
+    // Attempt to serve from MongoDB fallback
+    try {
+      const doc = await NowPlaying.findById("singleton").lean();
+      if (doc && doc.movies && doc.movies.length) {
+        cachedMovies = doc.movies; // hydrate in-memory cache for next hit
+        cacheTimestamp = Date.now();
+        return res.json({
+          success: true,
+          movies: doc.movies,
+          source: "mongodb",
+          message: "TMDB unreachable – served movies from database.",
+        });
+      }
+    } catch (dbErr) {
+      console.error("MongoDB NowPlaying fetch error:", dbErr.message);
+    }
+
+    // Fallback to cache if available
+    if (cachedMovies.length) {
+      return res.json({
+        success: true,
+        movies: cachedMovies,
+        cached: true,
+        message: "TMDB unreachable – served cached list.",
+      });
+    }
+
     const tmdbMessage = error?.response?.data?.status_message;
-    res.json({
+    return res.json({
       success: false,
       message: tmdbMessage || error.message || "Failed to fetch movies",
     });
