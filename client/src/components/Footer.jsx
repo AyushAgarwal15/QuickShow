@@ -8,42 +8,38 @@ const Footer = () => {
         <div className="md:max-w-96">
           <img className="w-36 h-auto" src={assets.logo} alt="logo" />
           <p className="mt-6 text-sm">
-            Lorem Ipsum has been the industry's standard dummy text ever since
-            the 1500s, when an unknown printer took a galley of type and
-            scrambled it to make a type specimen book.
+            QuickShow is a modern movie-ticket platform that makes discovering
+            and booking the latest releases effortless.  Browse curated
+            listings, pick your favourite seats in real-time, and secure your
+            tickets in just a few taps—anytime, anywhere.
           </p>
-          <div className="flex items-center gap-2 mt-4">
-            <img
-              src={assets.googlePlay}
-              alt="google play"
-              className="h-9 w-auto"
-            />
-            <img src={assets.appStore} alt="app store" className="h-9 w-auto" />
-          </div>
         </div>
         <div className="flex-1 flex items-start md:justify-end gap-20 md:gap-40">
           <div>
             <h2 className="font-semibold mb-5">Company</h2>
             <ul className="text-sm space-y-2">
               <li>
-                <a href="#">Home</a>
+                <a href="#" className="text-primary hover:underline">Home</a>
               </li>
               <li>
-                <a href="#">About us</a>
+                <a href="#" className="text-primary hover:underline">About us</a>
               </li>
               <li>
-                <a href="#">Contact us</a>
+                <a href="#" className="text-primary hover:underline">Contact us</a>
               </li>
               <li>
-                <a href="#">Privacy policy</a>
+                <a href="#" className="text-primary hover:underline">Privacy policy</a>
               </li>
             </ul>
           </div>
           <div>
             <h2 className="font-semibold mb-5">Get in touch</h2>
             <div className="text-sm space-y-2">
-              <p>+1-234-567-890</p>
-              <p>contact@example.com</p>
+              <p>+91-8126749140</p>
+              <p>ayushagarwal8126@gmail.com</p>
+              <a href="http://ayushagarwal.info" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                Developer: Ayush Agarwal
+              </a>
             </div>
           </div>
         </div>

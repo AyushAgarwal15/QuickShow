@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { assets } from "../assets/assets";
 import { MenuIcon, SearchIcon, XIcon } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
@@ -11,6 +11,7 @@ const Navbar = () => {
   const { user, logout, isAdmin } = useAppContext();
 
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -31,6 +32,8 @@ const Navbar = () => {
   }, [searchQuery]);
 
   const [showProfile, setShowProfile] = useState(false);
+
+  const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/') ;
 
   return (
     <div className="fixed top-0 left-0 z-50 w-full flex items-center justify-between px-6 md:px-16 lg:px-36 py-5">
@@ -54,6 +57,7 @@ const Navbar = () => {
             setIsOpen(false);
           }}
           to="/"
+          className={isActive('/') ? 'text-primary font-semibold' : ''}
         >
           Home
         </Link>
@@ -63,6 +67,7 @@ const Navbar = () => {
             setIsOpen(false);
           }}
           to="/movies"
+          className={isActive('/movies') ? 'text-primary font-semibold' : ''}
         >
           Movies
         </Link>
@@ -74,6 +79,7 @@ const Navbar = () => {
                 setIsOpen(false);
               }}
               to="/my-bookings"
+              className={isActive('/my-bookings') ? 'text-primary font-semibold' : ''}
             >
               My Bookings
             </Link>
@@ -83,6 +89,7 @@ const Navbar = () => {
                 setIsOpen(false);
               }}
               to="/favorite"
+              className={isActive('/favorite') ? 'text-primary font-semibold' : ''}
             >
               Favorites
             </Link>
@@ -93,6 +100,7 @@ const Navbar = () => {
                   setIsOpen(false);
                 }}
                 to="/admin"
+                className={isActive('/admin') ? 'text-primary font-semibold' : ''}
               >
                 Admin
               </Link>
