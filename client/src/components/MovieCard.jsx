@@ -25,7 +25,7 @@ const MovieCard = ({movie, index, showHeart=false}) => {
         }
     }
 
-    const runtimeDisplay = movie.runtime && movie.runtime > 0 ? timeFormat(movie.runtime) : timeFormat(120);
+    const runtimeDisplay = movie.runtime && movie.runtime > 0 ? timeFormat(movie.runtime) : timeFormat(125);
     const genresDisplay = movie.genres && movie.genres.length ? movie.genres.slice(0,2).map(g=>g.name).join(' | ') : 'Drama';
 
     return (

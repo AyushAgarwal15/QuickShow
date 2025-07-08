@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { assets } from "../assets/assets";
-import { MenuIcon, SearchIcon, XIcon } from "lucide-react";
+import { MenuIcon, XIcon } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
-import SearchBar from "./SearchBar";
 import BlurCircle from "./BlurCircle";
 
 const Navbar = () => {
@@ -13,27 +12,10 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const executeSearch = () => {
-    if (!searchQuery.trim()) return;
-    navigate(`/movies?search=${encodeURIComponent(searchQuery.trim())}`);
-    scrollTo(0,0);
-  };
-
-  // Real-time navigation when query changes (debounced to 300ms)
-  useEffect(() => {
-    if (!isSearchOpen) return;
-    const handler = setTimeout(() => {
-      executeSearch();
-    }, 300);
-    return () => clearTimeout(handler);
-  }, [searchQuery]);
-
   const [showProfile, setShowProfile] = useState(false);
 
-  const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/') ;
+  const isActive = (path) =>
+    location.pathname === path || location.pathname.startsWith(path + "/");
 
   return (
     <div className="fixed top-0 left-0 z-50 w-full flex items-center justify-between px-6 md:px-16 lg:px-36 py-5">
@@ -57,7 +39,7 @@ const Navbar = () => {
             setIsOpen(false);
           }}
           to="/"
-          className={isActive('/') ? 'text-primary font-semibold' : ''}
+          className={isActive("/") ? "text-primary font-semibold" : ""}
         >
           Home
         </Link>
@@ -67,7 +49,7 @@ const Navbar = () => {
             setIsOpen(false);
           }}
           to="/movies"
-          className={isActive('/movies') ? 'text-primary font-semibold' : ''}
+          className={isActive("/movies") ? "text-primary font-semibold" : ""}
         >
           Movies
         </Link>
@@ -79,7 +61,9 @@ const Navbar = () => {
                 setIsOpen(false);
               }}
               to="/my-bookings"
-              className={isActive('/my-bookings') ? 'text-primary font-semibold' : ''}
+              className={
+                isActive("/my-bookings") ? "text-primary font-semibold" : ""
+              }
             >
               My Bookings
             </Link>
@@ -89,7 +73,9 @@ const Navbar = () => {
                 setIsOpen(false);
               }}
               to="/favorite"
-              className={isActive('/favorite') ? 'text-primary font-semibold' : ''}
+              className={
+                isActive("/favorite") ? "text-primary font-semibold" : ""
+              }
             >
               Favorites
             </Link>
@@ -100,7 +86,9 @@ const Navbar = () => {
                   setIsOpen(false);
                 }}
                 to="/admin"
-                className={isActive('/admin') ? 'text-primary font-semibold' : ''}
+                className={
+                  isActive("/admin") ? "text-primary font-semibold" : ""
+                }
               >
                 Admin
               </Link>
@@ -110,25 +98,6 @@ const Navbar = () => {
       </div>
 
       <div className="flex items-center gap-8">
-        {!isSearchOpen ? (
-          <SearchIcon
-            className="hidden lg:block w-6 h-6 cursor-pointer"
-            onClick={() => {
-              setIsSearchOpen(true);
-              scrollTo(0, 0);
-            }}
-          />
-        ) : (
-          <SearchBar
-            value={searchQuery}
-            onChange={setSearchQuery}
-            onClose={() => {
-              setIsSearchOpen(false);
-              setSearchQuery("");
-            }}
-            className="w-44 md:w-60"
-          />
-        )}
         {!user ? (
           <button
             onClick={() => navigate("/login")}
@@ -138,25 +107,42 @@ const Navbar = () => {
           </button>
         ) : (
           <div className="flex items-center gap-3 relative">
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => setShowProfile(!showProfile)}>
+            <div
+              className="flex items-center gap-2 cursor-pointer"
+              onClick={() => setShowProfile(!showProfile)}
+            >
               <img
                 src={user.image || assets.profile}
                 alt="avatar"
                 className="w-8 h-8 rounded-full object-cover"
               />
-              <span className="text-sm font-medium">{user.name.split(" ")[0]}</span>
+              <span className="text-sm font-medium">
+                {user.name.split(" ")[0]}
+              </span>
             </div>
             {/* Admin shortcut next to avatar removed; now part of nav list */}
             {/* Dropdown */}
             {showProfile && (
               <div className="absolute right-0 top-full mt-2 bg-gray-900 border border-gray-700 rounded-lg p-4 w-60 z-50 backdrop-blur">
-                <XIcon className="absolute top-3 right-3 w-4 h-4 cursor-pointer text-gray-400 hover:text-white" onClick={() => setShowProfile(false)} />
+                <XIcon
+                  className="absolute top-3 right-3 w-4 h-4 cursor-pointer text-gray-400 hover:text-white"
+                  onClick={() => setShowProfile(false)}
+                />
                 <div className="flex flex-col items-center gap-2 relative mt-4">
                   <BlurCircle top="-30px" left="-30px" />
-                  <img src={user.image || assets.profile} alt="avatar" className="w-16 h-16 rounded-full object-cover" />
+                  <img
+                    src={user.image || assets.profile}
+                    alt="avatar"
+                    className="w-16 h-16 rounded-full object-cover"
+                  />
                   <h2 className="text-base font-semibold">{user.name}</h2>
                   <p className="text-gray-400 text-sm">{user.email}</p>
-                  <button className="mt-4 bg-primary px-3 py-1 rounded text-sm" onClick={logout}>Logout</button>
+                  <button
+                    className="mt-4 bg-primary px-3 py-1 rounded text-sm hover:bg-primary-dull transition cursor-pointer"
+                    onClick={logout}
+                  >
+                    Logout
+                  </button>
                 </div>
               </div>
             )}

@@ -52,7 +52,7 @@ const MyBookings = () => {
             <img src={image_base_url + item.movie.poster_path} alt="" className='md:max-w-45 aspect-video h-auto object-cover object-bottom rounded'/>
             <div className='flex flex-col p-4'>
               <p className='text-lg font-semibold'>{item.movie.title}</p>
-              <p className='text-gray-400 text-sm'>{timeFormat(item.movie.runtime)}</p>
+              <p className='text-gray-400 text-sm'>{timeFormat(item.movie.runtime && item.movie.runtime>0 ? item.movie.runtime : 125)}</p>
               <p className='text-gray-400 text-sm mt-auto'>{dateFormat(new Date(`${item.date}T${item.time}:00Z`))}</p>
             </div>
           </div>
