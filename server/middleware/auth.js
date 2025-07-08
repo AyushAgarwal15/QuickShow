@@ -29,7 +29,7 @@ export const protect = async (req, res, next) => {
 
 export const protectAdmin = async (req, res, next) => {
   await protect(req, res, async () => {
-    if (req.role !== "admin") {
+    if (req.role !== "admin" && req.role !== "superadmin") {
       return res.json({
         success: false,
         message: "user is not authorized to access admin dashboard",

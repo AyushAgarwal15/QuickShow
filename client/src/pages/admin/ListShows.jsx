@@ -72,15 +72,15 @@ const ListShows = () => {
             </tr>
           </thead>
           <tbody className="text-sm font-light">
-            {(searchText ? shows.filter((s)=> {
+            {(searchText ? (shows || []).filter((s)=> {
               const q = searchText.toLowerCase();
               return (
                 s.movie.title.toLowerCase().includes(q) ||
                 dateFormat(s.showDateTime).toLowerCase().includes(q) ||
-                String(Object.keys(s.occupiedSeats).length).includes(q) ||
-                String(Object.keys(s.occupiedSeats).length * s.showPrice).includes(q)
+                String(s.occupiedSeats).includes(q) ||
+                String(s.occupiedSeats * s.showPrice).includes(q)
               );
-            }) : shows).map((show, index) => (
+            }) : (shows || [])).map((show, index) => (
               <tr
                 key={index}
                 className="border-b border-primary/10 bg-primary/5 even:bg-primary/10"
@@ -88,11 +88,10 @@ const ListShows = () => {
                 <td className="p-2 min-w-45 pl-5">{show.movie.title}</td>
                 <td className="p-2">{dateFormat(show.showDateTime)}</td>
                 <td className="p-2">
-                  {Object.keys(show.occupiedSeats).length}
+                  {show.occupiedSeats}
                 </td>
                 <td className="p-2">
-                  {currency}{" "}
-                  {Object.keys(show.occupiedSeats).length * show.showPrice}
+                  {currency} {show.occupiedSeats * show.showPrice}
                 </td>
                 <td className="p-2 text-center">
                   <Trash2Icon

@@ -2,109 +2,91 @@ import Booking from "../models/Booking.js";
 import Show from "../models/Show.js";
 import stripe from "stripe";
 
-// Function to check availability of selected seats for a movie
-const checkSeatsAvailability = async (showId, selectedSeats) => {
-  try {
-    const showData = await Show.findById(showId);
-    if (!showData) return false;
-
-    const occupiedSeats = showData.occupiedSeats;
-
-    const isAnySeatTaken = selectedSeats.some((seat) => occupiedSeats[seat]);
-
-    return !isAnySeatTaken;
-  } catch (error) {
-    console.log(error.message);
-    return false;
-  }
+// Function to check availability of selected seats for a movie schedule slot
+const checkSeatsAvailability = async (movieId, date, time, selectedSeats) => {
+  const showDoc = await Show.findOne({ movie: movieId });
+  if (!showDoc) return false;
+  const slot = showDoc.schedule?.[date]?.[time];
+  if (!slot) return false;
+  const occupiedSeats = slot.occupiedSeats || {};
+  return !selectedSeats.some((s) => occupiedSeats[s]);
 };
 
 export const createBooking = async (req, res) => {
   try {
     const { userId } = req;
-    const { showId, selectedSeats } = req.body;
+    const { movieId, date, time, selectedSeats } = req.body;
     const { origin } = req.headers;
 
-    // Check if the seat is available for the selected show
-    const isAvailable = await checkSeatsAvailability(showId, selectedSeats);
-
+    // Validate availability
+    const isAvailable = await checkSeatsAvailability(movieId, date, time, selectedSeats);
     if (!isAvailable) {
-      return res.json({
-        success: false,
-        message: "Selected Seats are not available.",
-      });
+      return res.json({ success: false, message: "Selected Seats are not available." });
     }
 
-    // Get the show details
-    const showData = await Show.findById(showId).populate("movie");
+    const showDoc = await Show.findOne({ movie: movieId }).populate("movie");
+    const slot = showDoc.schedule[date][time];
 
-    // Create a new booking
+    const amount = slot.showPrice * selectedSeats.length;
+
+    // Create Booking
     const booking = await Booking.create({
       user: userId,
-      show: showId,
-      amount: showData.showPrice * selectedSeats.length,
+      movie: movieId,
+      date,
+      time,
+      amount,
       bookedSeats: selectedSeats,
     });
 
-    selectedSeats.map((seat) => {
-      showData.occupiedSeats[seat] = userId;
+    // Mark seats as occupied
+    selectedSeats.forEach((seat) => {
+      slot.occupiedSeats[seat] = userId;
     });
+    // Reflect updates in nested map
+    showDoc.markModified("schedule");
+    await showDoc.save();
 
-    showData.markModified("occupiedSeats");
-
-    await showData.save();
-
-    // Stripe Gateway Initialize
+    // Stripe
     const stripeInstance = new stripe(process.env.STRIPE_SECRET_KEY);
-
-    // Creating line items to for Stripe
-    const line_items = [
-      {
-        price_data: {
-          currency: "usd",
-          product_data: {
-            name: showData.movie.title,
-          },
-          unit_amount: Math.floor(booking.amount) * 100,
-        },
-        quantity: 1,
-      },
-    ];
-
     const session = await stripeInstance.checkout.sessions.create({
       success_url: `${origin}/loading/my-bookings`,
       cancel_url: `${origin}/my-bookings`,
-      line_items: line_items,
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            product_data: { name: showDoc.movie.title },
+            unit_amount: Math.floor(amount) * 100,
+          },
+          quantity: 1,
+        },
+      ],
       mode: "payment",
-      metadata: {
-        bookingId: booking._id.toString(),
-      },
-      expires_at: Math.floor(Date.now() / 1000) + 30 * 60, // Expires in 30 minutes
+      metadata: { bookingId: booking._id.toString() },
+      expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
     });
 
     booking.paymentLink = session.url;
     await booking.save();
 
-    // Previously Inngest scheduled a delayed payment-status check.
-    // You can implement a cron/queue if needed; for now we rely on the Stripe webhook to mark payments.
-
     res.json({ success: true, url: session.url });
   } catch (error) {
-    console.log(error.message);
+    console.error(error.message);
     res.json({ success: false, message: error.message });
   }
 };
 
 export const getOccupiedSeats = async (req, res) => {
   try {
-    const { showId } = req.params;
-    const showData = await Show.findById(showId);
-
-    const occupiedSeats = Object.keys(showData.occupiedSeats);
-
+    const { movieId, date, time } = req.params;
+    const showDoc = await Show.findOne({ movie: movieId });
+    const slot = showDoc?.schedule?.[date]?.[time];
+    if (!slot) return res.json({ success: true, occupiedSeats: [] });
+    const occupiedSeats = Object.keys(slot.occupiedSeats || {});
     res.json({ success: true, occupiedSeats });
   } catch (error) {
-    console.log(error.message);
+    console.error(error.message);
     res.json({ success: false, message: error.message });
   }
 };

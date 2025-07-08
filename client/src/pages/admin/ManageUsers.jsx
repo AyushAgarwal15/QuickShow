@@ -49,13 +49,18 @@ const ManageUsers = () => {
     fetchUsers();
   }, []);
 
-  const filtered = searchText
+  const filtered = (searchText
     ? users.filter(
         (u) =>
           u.name.toLowerCase().includes(searchText.toLowerCase()) ||
           u.email.toLowerCase().includes(searchText.toLowerCase())
       )
-    : users;
+    : users
+  ).sort((a, b) => {
+    if (a.role === 'superadmin') return -1;
+    if (b.role === 'superadmin') return 1;
+    return 0;
+  });
 
   return loading ? (
     <Loading />
@@ -78,14 +83,20 @@ const ManageUsers = () => {
                 <td className="p-2 pl-5">{user.name}</td>
                 <td className="p-2">{user.email}</td>
                 <td className="p-2">
-                  <select
-                    value={user.role}
-                    onChange={(e) => handleRoleChange(user._id, e.target.value)}
-                    className="bg-gray-800 border border-gray-600 px-2 py-1 rounded-md cursor-pointer"
-                  >
-                    <option value="user">user</option>
-                    <option value="admin">admin</option>
-                  </select>
+                  {user.role === "superadmin" ? (
+                    <span className="text-yellow-400 font-semibold drop-shadow-lg">
+                      Super&nbsp;Admin
+                    </span>
+                  ) : (
+                    <select
+                      value={user.role}
+                      onChange={(e) => handleRoleChange(user._id, e.target.value)}
+                      className="bg-gray-800 border border-gray-600 px-2 py-1 rounded-md cursor-pointer"
+                    >
+                      <option value="user">user</option>
+                      <option value="admin">admin</option>
+                    </select>
+                  )}
                 </td>
               </tr>
             ))}

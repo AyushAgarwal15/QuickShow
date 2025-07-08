@@ -30,7 +30,7 @@ const ListBookings = () => {
       if (user) {
         getAllBookings();
       }    
-    }, [user]);
+    }, [ user]);
 
 
   return !isLoading ? (
@@ -54,19 +54,23 @@ const ListBookings = () => {
             <tbody className="text-sm font-light">
                 {(searchText ? bookings.filter((item)=> {
                       const q = searchText.toLowerCase();
+                      const userName = item?.user?.name || "";
+                      const movieTitle = item?.movie?.title || "";
+                      const showTime = item ? dateFormat(new Date(`${item.date}T${item.time}:00Z`)) : "";
+                      const seatsString = (item.bookedSeats || []).join(', ').toLowerCase().includes(q);
                       return (
-                        item.user.name.toLowerCase().includes(q) ||
-                        item.show.movie.title.toLowerCase().includes(q) ||
-                        dateFormat(item.show.showDateTime).toLowerCase().includes(q) ||
-                        Object.keys(item.bookedSeats).some(seatKey => String(item.bookedSeats[seatKey]).toLowerCase().includes(q)) ||
+                        userName.toLowerCase().includes(q) ||
+                        movieTitle.toLowerCase().includes(q) ||
+                        showTime.toLowerCase().includes(q) ||
+                        seatsString ||
                         String(item.amount).includes(q)
                       );
-                    }) : bookings).map((item, index) => (
+                    }) : (bookings || [])).map((item, index) => (
                     <tr key={index} className="border-b border-primary/20 bg-primary/5 even:bg-primary/10">
-                        <td className="p-2 min-w-45 pl-5">{item.user.name}</td>
-                        <td className="p-2">{item.show.movie.title}</td>
-                        <td className="p-2">{dateFormat(item.show.showDateTime)}</td>
-                        <td className="p-2">{Object.keys(item.bookedSeats).map(seat => item.bookedSeats[seat]).join(", ")}</td>
+                        <td className="p-2 min-w-45 pl-5">{item.user?.name}</td>
+                        <td className="p-2">{item.movie.title}</td>
+                        <td className="p-2">{dateFormat(new Date(`${item.date}T${item.time}:00Z`))}</td>
+                        <td className="p-2">{item.bookedSeats.join(", ")}</td>
                         <td className="p-2">{currency} {item.amount}</td>
                     </tr>
                 ))}

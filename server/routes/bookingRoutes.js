@@ -8,6 +8,6 @@ import { protect } from "../middleware/auth.js";
 const bookingRouter = express.Router();
 
 bookingRouter.post("/create", protect, createBooking);
-bookingRouter.get("/seats/:showId", getOccupiedSeats);
+bookingRouter.get("/seats/:movieId/:date/:time", getOccupiedSeats);
 
 export default bookingRouter;

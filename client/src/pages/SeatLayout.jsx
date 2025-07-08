@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { assets, dummyDateTimeData, dummyShowsData } from '../assets/assets'
+import { useParams } from 'react-router-dom'
+import { assets } from '../assets/assets'
 import Loading from '../components/Loading'
 import { ArrowRightIcon, ClockIcon } from 'lucide-react'
 import isoTimeFormat from '../lib/isoTimeFormat'
@@ -12,19 +12,17 @@ const SeatLayout = () => {
 
   const groupRows = [["A", "B"], ["C", "D"], ["E", "F"], ["G", "H"], ["I", "J"]]
 
-  const {id, date } = useParams()
+  const {id: movieId, date } = useParams()
   const [selectedSeats, setSelectedSeats] = useState([])
   const [selectedTime, setSelectedTime] = useState(null)
   const [show, setShow] = useState(null)
   const [occupiedSeats, setOccupiedSeats] = useState([])
 
-  const navigate = useNavigate()
-
   const {axios, getToken, user} = useAppContext();
 
   const getShow = async () =>{
     try {
-      const { data } = await axios.get(`/api/show/${id}`)
+      const { data } = await axios.get(`/api/show/${movieId}`)
       if (data.success){
         setShow(data)
       }
@@ -65,7 +63,7 @@ const SeatLayout = () => {
 
   const getOccupiedSeats = async ()=>{
     try {
-      const { data } = await axios.get(`/api/booking/seats/${selectedTime.showId}`)
+      const { data } = await axios.get(`/api/booking/seats/${movieId}/${date}/${selectedTime.timeStr}`)
       if (data.success) {
         setOccupiedSeats(data.occupiedSeats)
       }else{
@@ -83,7 +81,7 @@ const SeatLayout = () => {
 
         if(!selectedTime || !selectedSeats.length) return toast.error('Please select a time and seats');
 
-        const {data} = await axios.post('/api/booking/create', {showId: selectedTime.showId, selectedSeats}, {headers: { Authorization: `Bearer ${await getToken()}` }});
+        const {data} = await axios.post('/api/booking/create', {movieId: movieId, date, time: selectedTime.timeStr, selectedSeats}, {headers: { Authorization: `Bearer ${await getToken()}` }});
 
         if (data.success){
           window.location.href = data.url;
@@ -112,7 +110,7 @@ const SeatLayout = () => {
         <p className='text-lg font-semibold px-6'>Available Timings</p>
         <div className='mt-5 space-y-1'>
           {show.dateTime[date].map((item)=>(
-            <div key={item.time} onClick={()=> setSelectedTime(item)} className={`flex items-center gap-2 px-6 py-2 w-max rounded-r-md cursor-pointer transition ${selectedTime?.time === item.time ? "bg-primary text-white" : "hover:bg-primary/20"}`}>
+            <div key={item.timeStr} onClick={()=> setSelectedTime(item)} className={`flex items-center gap-2 px-6 py-2 w-max rounded-r-md cursor-pointer transition ${selectedTime?.timeStr === item.timeStr ? "bg-primary text-white" : "hover:bg-primary/20"}`}>
               <ClockIcon className="w-4 h-4"/>
               <p className='text-sm'>{isoTimeFormat(item.time)}</p>
             </div>

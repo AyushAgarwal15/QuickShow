@@ -1,104 +1,30 @@
-import axios from "axios";
 import Movie from "../models/Movie.js";
 import Show from "../models/Show.js";
-import https from "https";
 import NowPlaying from "../models/NowPlaying.js";
-
-// Caching setup for TMDB now playing movies
-let cachedMovies = [];
-let cacheTimestamp = 0; // epoch ms
-const CACHE_TTL = 60 * 60 * 1000; // 1 hour
 
 // API to get now playing movies from TMDB API
 export const getNowPlayingMovies = async (req, res) => {
-  // Serve cached data if it is still fresh
-  if (cachedMovies.length && Date.now() - cacheTimestamp < CACHE_TTL) {
-    return res.json({ success: true, movies: cachedMovies, source: "cache" });
-  }
-
   try {
-    const tmdbKey = process.env.TMDB_API_KEY;
-
-    if (!tmdbKey) {
-      return res.json({
-        success: false,
-        message: "TMDB_API_KEY env variable not set",
-      });
+    // Attempt to pull the list from the NowPlaying singleton document first
+    const doc = await NowPlaying.findById("singleton").lean();
+    if (doc && Array.isArray(doc.movies) && doc.movies.length) {
+      return res.json({ success: true, movies: doc.movies, source: "db" });
     }
 
-    const url = "https://api.themoviedb.org/3/movie/now_playing";
-    const axiosOptions = {
-      timeout: 6000, // 6-second hard limit so the request never hangs
-      httpsAgent: new https.Agent({ family: 4 }), // force IPv4 first to avoid some ISP IPv6 DNS issues
-    };
-
-    let response;
-    if (tmdbKey.startsWith("ey") || tmdbKey.length > 40) {
-      response = await axios.get(url, {
-        ...axiosOptions,
-        headers: {
-          Authorization: `Bearer ${tmdbKey}`,
-          "Content-Type": "application/json;charset=utf-8",
-          Accept: "application/json",
-        },
-      });
-    } else {
-      response = await axios.get(url, {
-        ...axiosOptions,
-        params: { api_key: tmdbKey },
-      });
-    }
-
-    cachedMovies = response.data.results;
-    cacheTimestamp = Date.now();
-
-    // Persist to MongoDB for future offline use
-    await NowPlaying.findOneAndUpdate(
-      { _id: "singleton" },
-      { movies: cachedMovies },
-      { upsert: true, new: true }
-    );
-
-    return res.json({ success: true, movies: cachedMovies, source: "tmdb" });
-  } catch (error) {
-    console.error("TMDB error:", {
-      message: error.message,
-      status: error?.response?.status,
-      data: error?.response?.data,
-    });
-
-    // Attempt to serve from MongoDB fallback
-    try {
-      const doc = await NowPlaying.findById("singleton").lean();
-      if (doc && doc.movies && doc.movies.length) {
-        cachedMovies = doc.movies; // hydrate in-memory cache for next hit
-        cacheTimestamp = Date.now();
-        return res.json({
-          success: true,
-          movies: doc.movies,
-          source: "mongodb",
-          message: "TMDB unreachable – served movies from database.",
-        });
-      }
-    } catch (dbErr) {
-      console.error("MongoDB NowPlaying fetch error:", dbErr.message);
-    }
-
-    // Fallback to cache if available
-    if (cachedMovies.length) {
+    // Fallback – pull every movie we have stored in the Movies collection
+    const allMovies = await Movie.find({}).lean();
+    if (allMovies.length) {
       return res.json({
         success: true,
-        movies: cachedMovies,
-        cached: true,
-        message: "TMDB unreachable – served cached list.",
+        movies: allMovies,
+        source: "movie_collection",
       });
     }
 
-    const tmdbMessage = error?.response?.data?.status_message;
-    return res.json({
-      success: false,
-      message: tmdbMessage || error.message || "Failed to fetch movies",
-    });
+    return res.json({ success: false, message: "No movies available." });
+  } catch (error) {
+    console.error(error);
+    res.json({ success: false, message: error.message });
   }
 };
 
@@ -107,72 +33,55 @@ export const addShow = async (req, res) => {
   try {
     const { movieId, showsInput, showPrice } = req.body;
 
+    // Ensure movie exists (create if missing) – same logic as before
     let movie = await Movie.findById(movieId);
-
     if (!movie) {
-      // Fetch movie details and credits from TMDB API
-      const [movieDetailsResponse, movieCreditsResponse] = await Promise.all([
-        axios.get(`https://api.themoviedb.org/3/movie/${movieId}`, {
-          headers: { Authorization: `Bearer ${process.env.TMDB_API_KEY}` },
-        }),
-
-        axios.get(`https://api.themoviedb.org/3/movie/${movieId}/credits`, {
-          headers: { Authorization: `Bearer ${process.env.TMDB_API_KEY}` },
-        }),
-      ]);
-
-      const movieApiData = movieDetailsResponse.data;
-      const movieCreditsData = movieCreditsResponse.data;
-
-      const movieDetails = {
-        _id: movieId,
-        title: movieApiData.title,
-        overview: movieApiData.overview,
-        poster_path: movieApiData.poster_path,
-        backdrop_path: movieApiData.backdrop_path,
-        genres: movieApiData.genres,
-        casts: movieCreditsData.cast,
-        release_date: movieApiData.release_date,
-        original_language: movieApiData.original_language,
-        tagline: movieApiData.tagline || "",
-        vote_average: movieApiData.vote_average,
-        runtime: movieApiData.runtime,
-      };
-
-      // Add movie to the database
-      movie = await Movie.create(movieDetails);
+      const nowDoc = await NowPlaying.findById("singleton").lean();
+      const movieEntry = nowDoc?.movies?.find((m) => String(m.id) === String(movieId));
+      if (!movieEntry) {
+        return res.json({ success: false, message: "Movie not found in database." });
+      }
+      movie = await Movie.create({
+        _id: String(movieEntry.id),
+        title: movieEntry.title,
+        overview: movieEntry.overview || "",
+        poster_path: movieEntry.poster_path || "",
+        backdrop_path: movieEntry.backdrop_path || "",
+        release_date: movieEntry.release_date || "",
+        original_language: movieEntry.original_language || "",
+        tagline: movieEntry.tagline || "",
+        vote_average: movieEntry.vote_average || 0,
+        runtime: movieEntry.runtime || 0,
+        genres: movieEntry.genres || [],
+        casts: movieEntry.casts || [],
+      });
     }
 
-    const showsToCreate = [];
+    // Build update object for schedule map
+    const scheduleUpdates = {};
     showsInput.forEach((show) => {
-      const showDate = show.date;
+      const date = show.date; // YYYY-MM-DD
       show.time.forEach((time) => {
-        const dateTimeString = `${showDate}T${time}`;
-        showsToCreate.push({
-          updateOne: {
-            filter: {
-              movie: movieId,
-              showDateTime: new Date(dateTimeString),
-            },
-            update: {
-              $setOnInsert: {
-                movie: movieId,
-                showDateTime: new Date(dateTimeString),
-                showPrice,
-                occupiedSeats: {},
-              },
-            },
-            upsert: true,
-          },
-        });
+        const timeKey = time; // HH:mm (from front-end)
+        if (!scheduleUpdates[date]) scheduleUpdates[date] = {};
+        scheduleUpdates[date][timeKey] = { showPrice, occupiedSeats: {} };
       });
     });
 
-    if (showsToCreate.length) {
-      await Show.bulkWrite(showsToCreate);
-    }
+    const updateOps = {};
+    Object.entries(scheduleUpdates).forEach(([d, timesObj]) => {
+      Object.entries(timesObj).forEach(([t, payload]) => {
+        updateOps[`schedule.${d}.${t}`] = payload;
+      });
+    });
 
-    res.json({ success: true, message: "Show Added successfully." });
+    await Show.findOneAndUpdate(
+      { movie: movieId },
+      { $setOnInsert: { movie: movieId }, $set: updateOps },
+      { upsert: true, new: true }
+    );
+
+    res.json({ success: true, message: "Show schedule updated." });
   } catch (error) {
     console.error(error);
     res.json({ success: false, message: error.message });
@@ -182,14 +91,37 @@ export const addShow = async (req, res) => {
 // API to get all shows from the database
 export const getShows = async (req, res) => {
   try {
-    const shows = await Show.find({ showDateTime: { $gte: new Date() } })
-      .populate("movie")
-      .sort({ showDateTime: 1 });
+    const shows = await Show.find({}).populate("movie");
 
-    // Build a map keyed by movie _id to de-duplicate entries.
+    const now = new Date();
+
+    const response = shows.map((doc) => {
+      let earliest = null;
+      let price = 0;
+      let occCount = 0;
+      Object.entries(doc.schedule || {}).forEach(([date, timeMap]) => {
+        Object.entries(timeMap || {}).forEach(([timeStr, payload]) => {
+          const dt = new Date(`${date}T${timeStr}:00.000Z`);
+          if (dt >= now && (!earliest || dt < earliest)) {
+            earliest = dt;
+            price = payload.showPrice;
+          }
+          occCount += Object.keys(payload.occupiedSeats || {}).length;
+        });
+      });
+      return {
+        _id: doc._id,
+        movie: doc.movie,
+        showDateTime: earliest,
+        showPrice: price,
+        occupiedSeats: occCount,
+        schedule: doc.schedule,
+      };
+    });
+
     const uniqueMoviesMap = new Map();
-    shows.forEach((show) => {
-      const movieDoc = show.movie;
+    response.forEach((item) => {
+      const movieDoc = item.movie;
       if (movieDoc && !uniqueMoviesMap.has(movieDoc._id)) {
         uniqueMoviesMap.set(movieDoc._id, movieDoc);
       }
@@ -206,21 +138,20 @@ export const getShows = async (req, res) => {
 export const getShow = async (req, res) => {
   try {
     const { movieId } = req.params;
-    // get all upcoming shows for the movie
-    const shows = await Show.find({
-      movie: movieId,
-      showDateTime: { $gte: new Date() },
-    });
 
+    const showDoc = await Show.findOne({ movie: movieId });
     const movie = await Movie.findById(movieId);
-    const dateTime = {};
+    if (!showDoc || !movie) {
+      return res.json({ success: false, message: "Show not found" });
+    }
 
-    shows.forEach((show) => {
-      const date = show.showDateTime.toISOString().split("T")[0];
-      if (!dateTime[date]) {
-        dateTime[date] = [];
-      }
-      dateTime[date].push({ time: show.showDateTime, showId: show._id });
+    const dateTime = {};
+    Object.entries(showDoc.schedule || {}).forEach(([date, timeMap]) => {
+      dateTime[date] = Object.entries(timeMap || {}).map(([timeStr, payload]) => ({
+        time: `${date}T${timeStr}:00.000Z`, // full ISO for front-end
+        timeStr,
+        showPrice: payload.showPrice,
+      }));
     });
 
     res.json({ success: true, movie, dateTime });
@@ -233,15 +164,14 @@ export const getShow = async (req, res) => {
 // API to delete a show (admin only)
 export const deleteShow = async (req, res) => {
   try {
-    const { showId } = req.params;
+    const { showId } = req.params; // here showId is movie's Show document id
 
-    // Delete the show
     await Show.findByIdAndDelete(showId);
 
-    // Optionally, delete associated bookings
+    // Optionally, cascade delete bookings for this movie
     await (
       await import("../models/Booking.js")
-    ).default.deleteMany({ show: showId });
+    ).default.deleteMany({ movie: showId });
 
     res.json({ success: true, message: "Show deleted" });
   } catch (error) {
