@@ -4,6 +4,7 @@ import Title from '../../components/admin/Title';
 import { dateFormat } from '../../lib/dateFormat';
 import { useAppContext } from '../../context/AppContext';
 import SearchBar from "../../components/SearchBar";
+import EmptyState from "../../components/EmptyState";
 
 const ListBookings = () => {
     const currency = import.meta.env.VITE_CURRENCY
@@ -33,7 +34,7 @@ const ListBookings = () => {
     }, [ user]);
 
 
-  return !isLoading ? (
+  return isLoading ? <Loading /> : (bookings.length===0 ? <EmptyState title="No bookings yet" subtitle="Bookings will appear here." /> : (
     <>
       <Title text1="List" text2="Bookings" />
       <div className="max-w-4xl mt-6 overflow-x-auto">
@@ -78,7 +79,7 @@ const ListBookings = () => {
         </table>
       </div>
     </>
-  ) : <Loading />
+  ));
 }
 
 export default ListBookings

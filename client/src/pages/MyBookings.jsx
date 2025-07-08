@@ -5,6 +5,7 @@ import timeFormat from '../lib/timeFormat'
 import { dateFormat } from '../lib/dateFormat'
 import { useAppContext } from '../context/AppContext'
 import { Link } from 'react-router-dom'
+import EmptyState from '../components/EmptyState'
 
 const MyBookings = () => {
   const currency = import.meta.env.VITE_CURRENCY
@@ -37,7 +38,7 @@ const MyBookings = () => {
   },[user])
 
 
-  return !isLoading ? (
+  return isLoading ? <Loading /> : (bookings.length===0 ? <EmptyState title="No bookings yet" subtitle="Book your favorite show to see it here." /> : (
     <div className='relative px-6 md:px-16 lg:px-40 pt-30 md:pt-40 min-h-[80vh]'>
       <BlurCircle top="100px" left="100px"/>
       <div>
@@ -71,7 +72,7 @@ const MyBookings = () => {
       ))}
 
     </div>
-  ) : <Loading />
+  ))
 }
 
 export default MyBookings

@@ -8,7 +8,7 @@ const EmptyState = ({ title = "Nothing here", subtitle = "Please check back late
     <Motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col items-center justify-center h-screen mt-50 relative text-center max-w-screen"
+      className="flex flex-col items-center justify-center h-screen relative text-center max-w-screen"
     >
       <BlurCircle top="-40px" left="-40px" />
       <BlurCircle bottom="-40px" right="-40px" />

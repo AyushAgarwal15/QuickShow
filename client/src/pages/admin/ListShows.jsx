@@ -6,6 +6,7 @@ import { useAppContext } from "../../context/AppContext";
 import { Trash2Icon } from "lucide-react";
 import { toast } from "react-hot-toast";
 import SearchBar from "../../components/SearchBar";
+import EmptyState from "../../components/EmptyState";
 
 const ListShows = () => {
   const currency = import.meta.env.VITE_CURRENCY;
@@ -52,7 +53,11 @@ const ListShows = () => {
     }
   }, [user]);
 
-  return !loading ? (
+  return loading ? (
+    <Loading />
+  ) : shows.length === 0 ? (
+    <EmptyState title="No shows" subtitle="Please add shows first." />
+  ) : (
     <>
       <Title text1="List" text2="Shows" />
       <div className="max-w-4xl mt-6 overflow-x-auto">
@@ -105,8 +110,6 @@ const ListShows = () => {
         </table>
       </div>
     </>
-  ) : (
-    <Loading />
   );
 };
 

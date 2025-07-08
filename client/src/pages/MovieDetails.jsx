@@ -8,6 +8,7 @@ import MovieCard from "../components/MovieCard";
 import Loading from "../components/Loading";
 import { useAppContext } from "../context/AppContext";
 import toast from "react-hot-toast";
+import {dummyCastsData} from "../assets/assets";
 
 const MovieDetails = () => {
   const navigate = useNavigate();
@@ -58,6 +59,12 @@ const MovieDetails = () => {
     getShow();
   }, [id]);
 
+  const displayedCasts = show?.movie?.casts?.length ? show.movie.casts.slice(0,12) : dummyCastsData;
+
+  // fallback runtime (in minutes) if movie runtime missing
+  const displayRuntime = show?.movie?.runtime && show.movie.runtime > 0 ? timeFormat(show.movie.runtime) : timeFormat(125); // defaults to 2h 0m
+  const genresDisplay = show?.movie?.genres && show.movie.genres.length ? show.movie.genres.slice(0,2).map(g=>g.name).join(' | ') : 'Drama';
+
   return show ? (
     <div className="px-6 md:px-16 lg:px-40 pt-30 md:pt-50">
       <div className="flex flex-col md:flex-row gap-8 max-w-6xl mx-auto">
@@ -83,9 +90,9 @@ const MovieDetails = () => {
           </p>
 
           <p>
-            {timeFormat(show.movie.runtime)} •{" "}
-            {show.movie.genres.map((genre) => genre.name).join(", ")} •{" "}
-            {show.movie.release_date.split("-")[0]}
+            {displayRuntime + ' • '}
+            {genresDisplay + ' • '}
+            {show.movie.release_date.split('-')[0]}
           </p>
 
           <div className="flex items-center flex-wrap gap-4 mt-4">
@@ -118,7 +125,7 @@ const MovieDetails = () => {
       <p className="text-lg font-medium mt-20">Your Favorite Cast</p>
       <div className="overflow-x-auto no-scrollbar mt-8 pb-4">
         <div className="flex items-center gap-4 w-max px-4">
-          {show.movie.casts.slice(0, 12).map((cast, index) => (
+          {displayedCasts.map((cast, index) => (
             <div key={index} className="flex flex-col items-center text-center">
               <img
                 src={image_base_url + cast.profile_path}

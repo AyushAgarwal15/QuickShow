@@ -4,6 +4,7 @@ import Loading from "../../components/Loading";
 import SearchBar from "../../components/SearchBar";
 import { useAppContext } from "../../context/AppContext";
 import { toast } from "react-hot-toast";
+import EmptyState from "../../components/EmptyState";
 
 const ManageUsers = () => {
   const { axios, getToken } = useAppContext();
@@ -64,6 +65,8 @@ const ManageUsers = () => {
 
   return loading ? (
     <Loading />
+  ) : filtered.length===0 ? (
+    <EmptyState title="No users" subtitle="No users found." />
   ) : (
     <>
       <Title text1="Manage" text2="Users" />
@@ -84,7 +87,7 @@ const ManageUsers = () => {
                 <td className="p-2">{user.email}</td>
                 <td className="p-2">
                   {user.role === "superadmin" ? (
-                    <span className="text-yellow-400 font-semibold drop-shadow-lg">
+                    <span className="text-primary font-semibold drop-shadow-lg">
                       Super&nbsp;Admin
                     </span>
                   ) : (

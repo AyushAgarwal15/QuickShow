@@ -25,6 +25,9 @@ const MovieCard = ({movie, index, showHeart=false}) => {
         }
     }
 
+    const runtimeDisplay = movie.runtime && movie.runtime > 0 ? timeFormat(movie.runtime) : timeFormat(120);
+    const genresDisplay = movie.genres && movie.genres.length ? movie.genres.slice(0,2).map(g=>g.name).join(' | ') : 'Drama';
+
     return (
         <Motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -69,7 +72,7 @@ const MovieCard = ({movie, index, showHeart=false}) => {
                 transition={{ delay: 0.3 }}
                 className='text-sm text-gray-400 mt-2'
             >
-                {new Date(movie.release_date).getFullYear()} • {movie.genres.slice(0,2).map(genre => genre.name).join(" | ")} • {timeFormat(movie.runtime)}
+                {new Date(movie.release_date).getFullYear()} • {genresDisplay} • {runtimeDisplay}
             </Motion.p>
 
             <Motion.div 
